@@ -4,8 +4,10 @@ import com.nutritrack.app.data.repository.ActivityLogRepository
 import com.nutritrack.app.data.repository.BloodPressureRepository
 import com.nutritrack.app.data.repository.FoodDiaryRepository
 import com.nutritrack.app.data.repository.FoodLookupRepository
+import com.nutritrack.app.data.repository.FoodSearchRepository
 import com.nutritrack.app.data.repository.FrequentFoodsRepository
 import com.nutritrack.app.data.repository.OpenFoodFactsLookupRepository
+import com.nutritrack.app.data.repository.RemoteFoodSearchRepository
 import com.nutritrack.app.data.repository.RoomActivityLogRepository
 import com.nutritrack.app.data.repository.RoomBloodPressureRepository
 import com.nutritrack.app.data.repository.RoomFoodDiaryRepository
@@ -73,4 +75,10 @@ abstract class RepositoryModule {
     abstract fun bindSupplementsRepository(
         impl: RoomSupplementsRepository,
     ): SupplementsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFoodSearchRepository(
+        impl: RemoteFoodSearchRepository,
+    ): FoodSearchRepository
 }

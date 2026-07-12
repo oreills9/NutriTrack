@@ -1,9 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+}
+
+// Nutritionix credentials are read from the gitignored local.properties so they never end up
+// in version control. Add NUTRITIONIX_APP_ID / NUTRITIONIX_APP_KEY there to enable that search.
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -22,6 +33,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "NUTRITIONIX_APP_ID",
+            "\"${localProperties.getProperty("NUTRITIONIX_APP_ID", "")}\"",
+        )
+        buildConfigField(
+            "String",
+            "NUTRITIONIX_APP_KEY",
+            "\"${localProperties.getProperty("NUTRITIONIX_APP_KEY", "")}\"",
+        )
     }
 
     buildTypes {
@@ -37,6 +59,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
