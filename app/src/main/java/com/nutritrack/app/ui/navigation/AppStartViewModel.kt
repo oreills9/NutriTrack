@@ -2,17 +2,18 @@ package com.nutritrack.app.ui.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nutritrack.app.data.repository.UserProfileRepository
+import com.nutritrack.app.data.prefs.AppPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AppStartViewModel @Inject constructor(
-    private val userProfileRepository: UserProfileRepository,
+    private val appPreferencesRepository: AppPreferencesRepository,
 ) : ViewModel() {
 
     // Null while undetermined; the app shows a loading state until this resolves.
@@ -21,7 +22,8 @@ class AppStartViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _startDestination.value = if (userProfileRepository.getProfile() != null) {
+            val hasCompletedOnboarding = appPreferencesRepository.hasCompletedOnboarding.first()
+            _startDestination.value = if (hasCompletedOnboarding) {
                 Screen.Diary.route
             } else {
                 Screen.ProfileSetup.route
