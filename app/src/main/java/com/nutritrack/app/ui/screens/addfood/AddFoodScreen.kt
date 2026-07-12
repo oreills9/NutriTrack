@@ -14,10 +14,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.nutritrack.app.data.local.entity.MealSlot
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddFoodScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun AddFoodScreen(mealSlot: MealSlot, onBack: () -> Unit, modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -35,7 +36,7 @@ fun AddFoodScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(innerPadding).fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            Text("Food search and barcode scan coming soon")
+            Text("Food search and barcode scan coming soon\nAdding to: ${mealSlot.name}")
         }
     }
 }

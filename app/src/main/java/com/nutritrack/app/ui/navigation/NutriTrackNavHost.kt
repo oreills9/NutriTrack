@@ -3,8 +3,11 @@ package com.nutritrack.app.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.nutritrack.app.data.local.entity.MealSlot
 import com.nutritrack.app.ui.screens.activitylog.ActivityLogScreen
 import com.nutritrack.app.ui.screens.addfood.AddFoodScreen
 import com.nutritrack.app.ui.screens.bloodpressure.BloodPressureAnalysisScreen
@@ -38,13 +41,20 @@ fun NutriTrackNavHost(
         }
         composable(Screen.Diary.route) {
             DiaryScreen(
-                onAddFood = { navController.navigate(Screen.AddFood.route) },
+                onAddFood = { mealSlot -> navController.navigate(Screen.AddFood.createRoute(mealSlot)) },
                 onOpenSettings = { navController.navigate(Screen.Settings.route) },
                 onOpenSupplements = { navController.navigate(Screen.Supplements.route) },
             )
         }
-        composable(Screen.AddFood.route) {
-            AddFoodScreen(onBack = { navController.popBackStack() })
+        composable(
+            route = Screen.AddFood.route,
+            arguments = listOf(navArgument(Screen.AddFood.ARG_MEAL_SLOT) { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val mealSlot = backStackEntry.arguments
+                ?.getString(Screen.AddFood.ARG_MEAL_SLOT)
+                ?.let { runCatching { MealSlot.valueOf(it) }.getOrNull() }
+                ?: MealSlot.MORNING
+            AddFoodScreen(mealSlot = mealSlot, onBack = { navController.popBackStack() })
         }
         composable(Screen.ActivityLog.route) {
             ActivityLogScreen()
