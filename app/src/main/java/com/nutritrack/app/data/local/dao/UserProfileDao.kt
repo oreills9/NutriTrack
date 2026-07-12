@@ -26,4 +26,10 @@ interface UserProfileDao {
 
     @Query("SELECT * FROM user_profile WHERE id = 1")
     suspend fun get(): UserProfileEntity?
+
+    @Query("UPDATE user_profile SET daily_calorie_target = :target WHERE id = 1")
+    suspend fun updateDailyCalorieTarget(target: Int)
+
+    @Query("UPDATE user_profile SET weight_kg = :weightKg WHERE id = 1")
+    suspend fun updateWeight(weightKg: Double)
 }
