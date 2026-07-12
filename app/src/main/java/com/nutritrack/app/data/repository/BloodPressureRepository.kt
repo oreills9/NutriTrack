@@ -8,6 +8,7 @@ import javax.inject.Singleton
 
 interface BloodPressureRepository {
     fun observeAllReadings(): Flow<List<BloodPressureEntryEntity>>
+    fun observeLatestReading(): Flow<BloodPressureEntryEntity?>
     suspend fun logReading(entry: BloodPressureEntryEntity): Long
     suspend fun updateReading(entry: BloodPressureEntryEntity)
     suspend fun deleteReading(entry: BloodPressureEntryEntity)
@@ -19,6 +20,8 @@ class RoomBloodPressureRepository @Inject constructor(
 ) : BloodPressureRepository {
 
     override fun observeAllReadings(): Flow<List<BloodPressureEntryEntity>> = dao.observeAll()
+
+    override fun observeLatestReading(): Flow<BloodPressureEntryEntity?> = dao.observeLatest()
 
     override suspend fun logReading(entry: BloodPressureEntryEntity): Long = dao.insert(entry)
 

@@ -14,3 +14,9 @@ val Pink40 = Color(0xFF7D5260)
 // so "on track" always reads as green and "ahead of pace" always reads as amber.
 val PaceGreen = Color(0xFF2E7D32)
 val PaceAmber = Color(0xFFF9A825)
+
+// Fixed 4-step AHA blood pressure severity scale, also independent of the M3 color scheme.
+val BpNormalGreen = PaceGreen
+val BpElevatedAmber = PaceAmber
+val BpStage1Orange = Color(0xFFEF6C00)
+val BpStage2Red = Color(0xFFC62828)

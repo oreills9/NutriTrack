@@ -25,6 +25,9 @@ interface BloodPressureEntryDao {
     @Query("SELECT * FROM blood_pressure_entry ORDER BY date DESC")
     fun observeAll(): Flow<List<BloodPressureEntryEntity>>
 
+    @Query("SELECT * FROM blood_pressure_entry ORDER BY date DESC, id DESC LIMIT 1")
+    fun observeLatest(): Flow<BloodPressureEntryEntity?>
+
     @Query("SELECT * FROM blood_pressure_entry WHERE date = :date ORDER BY time_of_day ASC")
     fun observeForDate(date: LocalDate): Flow<List<BloodPressureEntryEntity>>
 

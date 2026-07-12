@@ -10,6 +10,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,13 +21,22 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun NutriTrackApp(modifier: Modifier = Modifier) {
+fun NutriTrackApp(
+    modifier: Modifier = Modifier,
+    pendingRoute: String? = null,
+    onPendingRouteConsumed: () -> Unit = {},
+) {
     val appStartViewModel: AppStartViewModel = hiltViewModel()
     val startDestination by appStartViewModel.startDestination.collectAsStateWithLifecycle()
 
     when (val destination = startDestination) {
         null -> LoadingScreen(modifier)
-        else -> NutriTrackScaffold(startDestination = destination, modifier = modifier)
+        else -> NutriTrackScaffold(
+            startDestination = destination,
+            pendingRoute = pendingRoute,
+            onPendingRouteConsumed = onPendingRouteConsumed,
+            modifier = modifier,
+        )
     }
 }
 
@@ -38,10 +48,24 @@ private fun LoadingScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun NutriTrackScaffold(startDestination: String, modifier: Modifier = Modifier) {
+private fun NutriTrackScaffold(
+    startDestination: String,
+    pendingRoute: String?,
+    onPendingRouteConsumed: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val showBottomBar = bottomNavItems.any { it.sectionRoutes.contains(currentRoute) }
+
+    // Only honour a notification-launched destination once onboarding is already done -
+    // otherwise let the normal profile_setup flow run and drop the pending navigation.
+    LaunchedEffect(pendingRoute) {
+        if (pendingRoute != null && startDestination == Screen.Diary.route) {
+            navController.navigate(pendingRoute)
+            onPendingRouteConsumed()
+        }
+    }
 
     Scaffold(
         modifier = modifier,

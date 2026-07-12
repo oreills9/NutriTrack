@@ -9,48 +9,91 @@ import com.nutritrack.app.domain.bloodpressure.BloodPressureAnalyzer
 import com.nutritrack.app.domain.bloodpressure.BloodPressureAverages
 import com.nutritrack.app.domain.bloodpressure.BloodPressureCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
 data class BloodPressureUiState(
     val readings: List<BloodPressureEntryEntity> = emptyList(),
+    val latestReading: BloodPressureEntryEntity? = null,
     val eightWeekAverages: BloodPressureAverages? = null,
-)
+    val systolic: Int? = null,
+    val diastolic: Int? = null,
+    val heartRateBpm: Int? = null,
+    val timeOfDay: TimeOfDay = TimeOfDay.MORNING,
+    val note: String = "",
+    val isSaving: Boolean = false,
+    val isSaved: Boolean = false,
+) {
+    val liveClassification: BloodPressureCategory?
+        get() {
+            val sys = systolic ?: return null
+            val dia = diastolic ?: return null
+            return BloodPressureAnalyzer.classify(sys, dia)
+        }
+
+    val canSave: Boolean
+        get() = systolic != null && diastolic != null && heartRateBpm != null
+}
 
 @HiltViewModel
 class BloodPressureViewModel @Inject constructor(
     private val bloodPressureRepository: BloodPressureRepository,
 ) : ViewModel() {
 
-    val uiState: StateFlow<BloodPressureUiState> = bloodPressureRepository.observeAllReadings()
-        .map { readings ->
-            BloodPressureUiState(
-                readings = readings,
-                eightWeekAverages = BloodPressureAnalyzer.calculateAverages(readings),
-            )
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BloodPressureUiState())
+    private val _uiState = MutableStateFlow(BloodPressureUiState())
+    val uiState: StateFlow<BloodPressureUiState> = _uiState.asStateFlow()
 
-    fun classify(systolic: Int, diastolic: Int): BloodPressureCategory =
-        BloodPressureAnalyzer.classify(systolic, diastolic)
+    init {
+        combine(
+            bloodPressureRepository.observeAllReadings(),
+            bloodPressureRepository.observeLatestReading(),
+        ) { readings, latest ->
+            _uiState.update {
+                it.copy(
+                    readings = readings,
+                    latestReading = latest,
+                    eightWeekAverages = BloodPressureAnalyzer.calculateAverages(readings),
+                )
+            }
+        }.launchIn(viewModelScope)
+    }
 
-    fun logReading(systolic: Int, diastolic: Int, heartRateBpm: Int, timeOfDay: TimeOfDay, note: String? = null) {
+    fun updateSystolic(value: Int?) = _uiState.update { it.copy(systolic = value) }
+
+    fun updateDiastolic(value: Int?) = _uiState.update { it.copy(diastolic = value) }
+
+    fun updateHeartRate(value: Int?) = _uiState.update { it.copy(heartRateBpm = value) }
+
+    fun selectTimeOfDay(timeOfDay: TimeOfDay) = _uiState.update { it.copy(timeOfDay = timeOfDay) }
+
+    fun updateNote(note: String) = _uiState.update { it.copy(note = note) }
+
+    fun saveReading() {
+        val state = _uiState.value
+        val systolic = state.systolic ?: return
+        val diastolic = state.diastolic ?: return
+        val heartRate = state.heartRateBpm ?: return
+
         viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
             bloodPressureRepository.logReading(
                 BloodPressureEntryEntity(
                     date = LocalDate.now(),
                     systolic = systolic,
                     diastolic = diastolic,
-                    heartRateBpm = heartRateBpm,
-                    timeOfDay = timeOfDay,
-                    note = note,
+                    heartRateBpm = heartRate,
+                    timeOfDay = state.timeOfDay,
+                    note = state.note.trim().ifBlank { null },
                 ),
             )
+            _uiState.update { it.copy(isSaving = false, isSaved = true) }
         }
     }
 

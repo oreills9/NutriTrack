@@ -56,7 +56,11 @@ fun NutriTrackNavHost(
             ActivityLogScreen()
         }
         composable(Screen.BloodPressureEntry.route) {
-            BloodPressureEntryScreen(onSaved = { navController.popBackStack() })
+            BloodPressureEntryScreen(
+                onSaved = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
+                onViewAnalysis = { navController.navigate(Screen.BloodPressureAnalysis.route) },
+            )
         }
         composable(Screen.BloodPressureAnalysis.route) {
             BloodPressureAnalysisScreen(
