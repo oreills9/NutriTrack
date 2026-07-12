@@ -36,4 +36,7 @@ interface ActivityEntryDao {
 
     @Query("SELECT COALESCE(SUM(calories_burned), 0.0) FROM activity_entry WHERE date = :date")
     fun observeTotalCaloriesBurnedForDate(date: LocalDate): Flow<Double>
+
+    @Query("SELECT * FROM activity_entry ORDER BY timestamp DESC LIMIT :limit")
+    fun observeRecent(limit: Int = 5): Flow<List<ActivityEntryEntity>>
 }
