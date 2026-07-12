@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
-import com.nutritrack.app.ui.navigation.NutriTrackNavHost
+import com.nutritrack.app.ui.navigation.NutriTrackApp
 import com.nutritrack.app.ui.theme.NutriTrackTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             NutriTrackTheme {
-                NutriTrackNavHost(modifier = Modifier.fillMaxSize())
+                NutriTrackApp(modifier = Modifier.fillMaxSize())
             }
         }
     }
