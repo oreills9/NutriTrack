@@ -15,7 +15,10 @@ import javax.inject.Inject
 
 data class SupplementsUiState(
     val checklist: List<SupplementEntryEntity> = emptyList(),
-)
+) {
+    val allTakenToday: Boolean
+        get() = checklist.isNotEmpty() && checklist.all { it.takenToday }
+}
 
 @HiltViewModel
 class SupplementsViewModel @Inject constructor(
