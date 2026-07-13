@@ -9,6 +9,7 @@ import javax.inject.Singleton
 
 interface ActivityLogRepository {
     fun observeEntriesForDate(date: LocalDate): Flow<List<ActivityEntryEntity>>
+    fun observeEntriesBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<ActivityEntryEntity>>
     fun observeTotalCaloriesBurnedForDate(date: LocalDate): Flow<Double>
     fun observeRecentEntries(limit: Int = 5): Flow<List<ActivityEntryEntity>>
     suspend fun logActivity(entry: ActivityEntryEntity): Long
@@ -22,6 +23,9 @@ class RoomActivityLogRepository @Inject constructor(
 ) : ActivityLogRepository {
 
     override fun observeEntriesForDate(date: LocalDate): Flow<List<ActivityEntryEntity>> = dao.observeForDate(date)
+
+    override fun observeEntriesBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<ActivityEntryEntity>> =
+        dao.observeBetweenDates(startDate, endDate)
 
     override fun observeTotalCaloriesBurnedForDate(date: LocalDate): Flow<Double> =
         dao.observeTotalCaloriesBurnedForDate(date)

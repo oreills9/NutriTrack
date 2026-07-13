@@ -9,6 +9,7 @@ import javax.inject.Singleton
 
 interface FoodDiaryRepository {
     fun observeEntriesForDate(date: LocalDate): Flow<List<FoodEntryEntity>>
+    fun observeEntriesBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<FoodEntryEntity>>
     fun observeTotalCaloriesForDate(date: LocalDate): Flow<Double>
     suspend fun logFood(entry: FoodEntryEntity): Long
     suspend fun updateEntry(entry: FoodEntryEntity)
@@ -21,6 +22,9 @@ class RoomFoodDiaryRepository @Inject constructor(
 ) : FoodDiaryRepository {
 
     override fun observeEntriesForDate(date: LocalDate): Flow<List<FoodEntryEntity>> = dao.observeForDate(date)
+
+    override fun observeEntriesBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<FoodEntryEntity>> =
+        dao.observeBetweenDates(startDate, endDate)
 
     override fun observeTotalCaloriesForDate(date: LocalDate): Flow<Double> = dao.observeTotalCaloriesForDate(date)
 

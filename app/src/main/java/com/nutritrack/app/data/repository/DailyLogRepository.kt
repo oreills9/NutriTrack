@@ -9,6 +9,7 @@ import javax.inject.Singleton
 
 interface DailyLogRepository {
     fun observeForDate(date: LocalDate): Flow<DailyLogEntity?>
+    fun observeBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<DailyLogEntity>>
     suspend fun getForDate(date: LocalDate): DailyLogEntity?
     suspend fun upsert(log: DailyLogEntity)
 }
@@ -19,6 +20,9 @@ class RoomDailyLogRepository @Inject constructor(
 ) : DailyLogRepository {
 
     override fun observeForDate(date: LocalDate): Flow<DailyLogEntity?> = dao.observeForDate(date)
+
+    override fun observeBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<DailyLogEntity>> =
+        dao.observeBetweenDates(startDate, endDate)
 
     override suspend fun getForDate(date: LocalDate): DailyLogEntity? = dao.getForDate(date)
 

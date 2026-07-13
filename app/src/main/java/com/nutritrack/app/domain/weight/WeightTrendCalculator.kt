@@ -1,6 +1,7 @@
 package com.nutritrack.app.domain.weight
 
 import com.nutritrack.app.data.local.entity.WeightEntryEntity
+import java.time.LocalDate
 
 data class WeightTrendPoint(
     val entry: WeightEntryEntity,
@@ -27,4 +28,10 @@ object WeightTrendCalculator {
         val last = entriesAscending.lastOrNull() ?: return 0.0
         return first.weightKg - last.weightKg
     }
+
+    // Carries the most recent weigh-in forward to `date`, for comparing weight at arbitrary
+    // date boundaries (e.g. week start/end) when weigh-ins don't land on those exact days.
+    // entriesDescending must be sorted newest-to-oldest by date (as returned by observeAllEntries()).
+    fun weightAsOf(entriesDescending: List<WeightEntryEntity>, date: LocalDate): Double? =
+        entriesDescending.firstOrNull { it.date <= date }?.weightKg
 }
