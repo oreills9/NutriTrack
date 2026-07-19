@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -32,7 +34,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +50,8 @@ import com.nutritrack.app.data.local.entity.TimeOfDay
 import com.nutritrack.app.domain.bloodpressure.BloodPressureAnalyzer
 import com.nutritrack.app.domain.bloodpressure.BloodPressureCategory
 import com.nutritrack.app.domain.bloodpressure.BloodPressureTimeRange
+import com.nutritrack.app.ui.screens.weighthistory.LogWeightBottomSheet
+import com.nutritrack.app.ui.screens.weighthistory.WeightHistoryViewModel
 import com.nutritrack.app.ui.theme.BpElevatedAmber
 import com.nutritrack.app.ui.theme.BpNormalGreen
 import com.nutritrack.app.ui.theme.BpStage1Orange
@@ -90,8 +96,11 @@ fun BloodPressureAnalysisScreen(
     onViewWeightHistory: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BloodPressureAnalysisViewModel = hiltViewModel(),
+    weightHistoryViewModel: WeightHistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var fabMenuExpanded by remember { mutableStateOf(false) }
+    var showLogWeightSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -121,8 +130,26 @@ fun BloodPressureAnalysisScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onLogNewReading) {
-                Icon(Icons.Filled.Add, contentDescription = "Log reading")
+            Box {
+                FloatingActionButton(onClick = { fabMenuExpanded = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Log a new entry")
+                }
+                DropdownMenu(expanded = fabMenuExpanded, onDismissRequest = { fabMenuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Log Blood Pressure") },
+                        onClick = {
+                            fabMenuExpanded = false
+                            onLogNewReading()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Log Weight") },
+                        onClick = {
+                            fabMenuExpanded = false
+                            showLogWeightSheet = true
+                        },
+                    )
+                }
             }
         },
     ) { innerPadding ->
@@ -153,6 +180,16 @@ fun BloodPressureAnalysisScreen(
 
             TextButton(onClick = onViewWeightHistory) { Text("View weight history") }
         }
+    }
+
+    if (showLogWeightSheet) {
+        LogWeightBottomSheet(
+            onDismiss = { showLogWeightSheet = false },
+            onSave = { weightKg, note ->
+                weightHistoryViewModel.logWeight(weightKg, note)
+                showLogWeightSheet = false
+            },
+        )
     }
 }
 
