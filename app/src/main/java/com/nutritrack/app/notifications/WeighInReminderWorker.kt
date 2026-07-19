@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.nutritrack.app.MainActivity
+import com.nutritrack.app.R
 import com.nutritrack.app.ui.navigation.Screen
 
 class WeighInReminderWorker(
@@ -44,7 +45,7 @@ class WeighInReminderWorker(
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Weekly weigh-in")
             .setContentText("Good morning — time for your weekly weigh-in. Log your weight in NutriTrack.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

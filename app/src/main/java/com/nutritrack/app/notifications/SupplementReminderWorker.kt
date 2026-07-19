@@ -12,6 +12,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.nutritrack.app.MainActivity
+import com.nutritrack.app.R
 import com.nutritrack.app.data.local.entity.SupplementEntryEntity
 import com.nutritrack.app.data.repository.SupplementsRepository
 import com.nutritrack.app.ui.navigation.Screen
@@ -56,7 +57,7 @@ class SupplementReminderWorker @AssistedInject constructor(
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Time for ${supplement.name}")
             .setContentText(supplement.dosageNotes?.ifBlank { null } ?: "Mark it as taken in NutriTrack once you have.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

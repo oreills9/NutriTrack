@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.nutritrack.app.MainActivity
+import com.nutritrack.app.R
 import com.nutritrack.app.ui.navigation.Screen
 
 class BloodPressureReminderWorker(
@@ -43,9 +44,8 @@ class BloodPressureReminderWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        // No custom monochrome icon asset exists yet, so this falls back to a system icon.
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Weekly blood pressure check")
             .setContentText("Time for your weekly blood pressure check. Sit quietly for 5 minutes first.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

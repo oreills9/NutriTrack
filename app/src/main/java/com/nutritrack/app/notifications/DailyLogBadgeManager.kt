@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.nutritrack.app.MainActivity
+import com.nutritrack.app.R
 import com.nutritrack.app.data.local.entity.FoodEntryEntity
 import com.nutritrack.app.data.local.entity.MealSlot
 import com.nutritrack.app.ui.navigation.Screen
@@ -59,7 +60,7 @@ class DailyLogBadgeManager @Inject constructor(
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Today's food log is incomplete")
             .setContentText("Tap to finish logging today's meals.")
             .setNumber(1)

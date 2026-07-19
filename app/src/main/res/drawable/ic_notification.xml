@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same "NT" monogram as the launcher icon, redrawn at notification-icon scale. Android requires
+     status bar/notification small icons to be a flat white silhouette on transparent - the OS
+     re-tints and re-masks whatever is provided, ignoring any other color - so this can't just be
+     the launcher icon file reused directly; it's the same letterforms with thicker strokes so they
+     stay legible at ~24dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- N -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M2,4 L4,4 L4,20 L2,20 Z
+                           M8,4 L10,4 L10,20 L8,20 Z
+                           M2,4 L4,4 L10,20 L8,20 Z" />
+    <!-- T -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13,4 L21,4 L21,6 L13,6 Z
+                           M16,6 L18,6 L18,20 L16,20 Z" />
+</vector>

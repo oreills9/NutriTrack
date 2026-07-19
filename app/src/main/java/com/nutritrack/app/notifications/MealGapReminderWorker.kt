@@ -12,6 +12,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.nutritrack.app.MainActivity
+import com.nutritrack.app.R
 import com.nutritrack.app.data.repository.FoodDiaryRepository
 import com.nutritrack.app.ui.navigation.Screen
 import dagger.assisted.Assisted
@@ -61,7 +62,7 @@ class MealGapReminderWorker @AssistedInject constructor(
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Meal reminder")
             .setContentText("You haven't logged anything in a while — don't forget to track your meals.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
