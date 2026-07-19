@@ -66,14 +66,12 @@ import com.patrykandpatrick.vico.compose.common.Insets
 import com.patrykandpatrick.vico.compose.common.LegendItem
 import com.patrykandpatrick.vico.compose.common.component.ShapeComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
-import com.patrykandpatrick.vico.compose.common.data.ExtraStore
 import com.patrykandpatrick.vico.compose.common.rememberHorizontalLegend
 import com.patrykandpatrick.vico.compose.common.vicoTheme
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 private val HISTORY_DATE_FORMAT = DateTimeFormatter.ofPattern("EEE, MMM d")
-private val ChartDateLabelKey = ExtraStore.Key<List<String>>()
 private val SystolicColor = BpStage2Red
 private val DiastolicColor = Color(0xFF2A78D6)
 private const val NORMAL_BAND_TOP = 120.0
@@ -197,9 +195,6 @@ private fun StatTile(label: String, value: String, modifier: Modifier = Modifier
 @Composable
 private fun BloodPressureLineChart(readings: List<BloodPressureEntryEntity>, modifier: Modifier = Modifier) {
     val modelProducer = remember { CartesianChartModelProducer() }
-    val dateLabels = remember(readings) {
-        readings.map { it.date.format(HISTORY_DATE_FORMAT) }
-    }
 
     LaunchedEffect(readings) {
         val xValues: List<Number> = readings.indices.map { it }
@@ -208,7 +203,6 @@ private fun BloodPressureLineChart(readings: List<BloodPressureEntryEntity>, mod
                 series(xValues, readings.map { it.systolic })
                 series(xValues, readings.map { it.diastolic })
             }
-            extras { it[ChartDateLabelKey] = dateLabels }
         }
     }
 
@@ -236,8 +230,15 @@ private fun BloodPressureLineChart(readings: List<BloodPressureEntryEntity>, mod
             ),
             startAxis = VerticalAxis.rememberStart(),
             bottomAxis = HorizontalAxis.rememberBottom(
-                valueFormatter = CartesianValueFormatter { context, x, _ ->
-                    context.model.extraStore[ChartDateLabelKey].getOrNull(x.toInt()).orEmpty()
+                // Formats directly from the readings list captured in this composable's scope,
+                // clamped to a valid index, rather than a stored per-index label list read back
+                // out of the model's extraStore. The model persists across recompositions inside
+                // modelProducer while a remembered label list can momentarily go out of sync with
+                // it, and Vico 3.x throws if the formatter ever returns a blank string for a
+                // position it's measuring.
+                valueFormatter = CartesianValueFormatter { _, x, _ ->
+                    val index = x.toInt().coerceIn(readings.indices)
+                    readings[index].date.format(HISTORY_DATE_FORMAT)
                 },
             ),
             decorations = decorations,

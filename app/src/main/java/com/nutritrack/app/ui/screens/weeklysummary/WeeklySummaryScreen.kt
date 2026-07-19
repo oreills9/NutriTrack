@@ -59,7 +59,6 @@ import com.patrykandpatrick.vico.compose.common.LegendItem
 import com.patrykandpatrick.vico.compose.common.component.ShapeComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
-import com.patrykandpatrick.vico.compose.common.data.ExtraStore
 import com.patrykandpatrick.vico.compose.common.rememberHorizontalLegend
 import com.patrykandpatrick.vico.compose.common.vicoTheme
 import java.time.format.DateTimeFormatter
@@ -68,7 +67,6 @@ import kotlin.math.roundToInt
 import java.time.format.TextStyle as JavaTextStyle
 
 private val WEEK_RANGE_FORMAT = DateTimeFormatter.ofPattern("MMM d")
-private val DayLabelKey = ExtraStore.Key<List<String>>()
 private val ChartColors = listOf(Color(0xFF2A78D6), PaceGreen) // food = blue, activity = green
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,9 +155,6 @@ private fun StatTile(label: String, value: String, modifier: Modifier = Modifier
 @Composable
 private fun WeeklyIntakeChart(uiState: WeeklySummaryUiState, modifier: Modifier = Modifier) {
     val modelProducer = remember { CartesianChartModelProducer() }
-    val dayLabels = remember(uiState.weekStart) {
-        uiState.chartPoints.map { it.date.dayOfWeek.getDisplayName(JavaTextStyle.SHORT, Locale.getDefault()) }
-    }
 
     LaunchedEffect(uiState.chartPoints) {
         if (uiState.chartPoints.isEmpty()) return@LaunchedEffect
@@ -169,13 +164,13 @@ private fun WeeklyIntakeChart(uiState: WeeklySummaryUiState, modifier: Modifier 
                 series(xValues, uiState.chartPoints.map { it.intake })
                 series(xValues, uiState.chartPoints.map { it.burned })
             }
-            extras { it[DayLabelKey] = dayLabels }
         }
     }
 
     val legendLabelComponent = rememberTextComponent(TextStyle(vicoTheme.textColor, 12.sp))
     val target = uiState.dailyCalorieTarget
     val decorations = if (target != null) listOf(rememberTargetLine(target)) else emptyList()
+    val weekStart = uiState.weekStart
 
     CartesianChartHost(
         chart = rememberCartesianChart(
@@ -187,8 +182,13 @@ private fun WeeklyIntakeChart(uiState: WeeklySummaryUiState, modifier: Modifier 
             ),
             startAxis = VerticalAxis.rememberStart(),
             bottomAxis = HorizontalAxis.rememberBottom(
-                valueFormatter = CartesianValueFormatter { context, x, _ ->
-                    context.model.extraStore[DayLabelKey].getOrNull(x.toInt()).orEmpty()
+                // Computed directly from x + weekStart rather than a stored per-index label list -
+                // the model persists across recompositions inside modelProducer while a remembered
+                // label list can momentarily go out of sync with it (e.g. on first composition,
+                // before chartPoints has loaded), and Vico 3.x throws if the formatter ever returns
+                // a blank string for a position it's measuring.
+                valueFormatter = CartesianValueFormatter { _, x, _ ->
+                    weekStart.plusDays(x.toLong()).dayOfWeek.getDisplayName(JavaTextStyle.SHORT, Locale.getDefault())
                 },
             ),
             decorations = decorations,
