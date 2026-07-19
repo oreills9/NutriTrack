@@ -18,6 +18,7 @@ import com.nutritrack.app.notifications.BloodPressureReminderScheduler
 import com.nutritrack.app.notifications.MealGapReminderScheduler
 import com.nutritrack.app.notifications.SupplementReminderScheduler
 import com.nutritrack.app.notifications.WeighInReminderScheduler
+import com.nutritrack.app.ui.theme.ColorTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -58,6 +60,8 @@ data class SettingsUiState(
     val sundayWeighInReminderEnabled: Boolean = true,
     val sundayWeighInReminderTime: LocalTime = LocalTime.of(8, 0),
     val supplementReminderEnabled: Boolean = true,
+
+    val selectedColorTheme: ColorTheme = ColorTheme.DYNAMIC,
 
     val isExporting: Boolean = false,
     val exportMessage: String? = null,
@@ -145,6 +149,12 @@ class SettingsViewModel @Inject constructor(
                 )
             }
         }.launchIn(viewModelScope)
+
+        appPreferencesRepository.selectedColorThemeName
+            .onEach { name ->
+                val theme = ColorTheme.entries.find { it.name == name } ?: ColorTheme.DYNAMIC
+                _uiState.update { it.copy(selectedColorTheme = theme) }
+            }.launchIn(viewModelScope)
     }
 
     fun updatePreferredUnits(value: UnitSystem) = _uiState.update { it.copy(preferredUnits = value) }
@@ -297,6 +307,10 @@ class SettingsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun selectColorTheme(theme: ColorTheme) {
+        viewModelScope.launch { appPreferencesRepository.setSelectedColorThemeName(theme.name) }
     }
 
     fun exportAllData() {

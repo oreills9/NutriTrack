@@ -105,6 +105,9 @@ fun SettingsScreen(
         ) {
             UnitsSection(selected = uiState.preferredUnits, onSelected = viewModel::updatePreferredUnits)
 
+            SectionHeader("Appearance")
+            ColorThemeSection(selected = uiState.selectedColorTheme, onSelected = viewModel::selectColorTheme)
+
             SectionHeader("Personal Details")
             PersonalDetailsSection(uiState = uiState, viewModel = viewModel)
 

@@ -49,6 +49,12 @@ interface AppPreferencesRepository {
     // just the master on/off switch for all of them.
     val supplementReminderEnabled: Flow<Boolean>
     suspend fun setSupplementReminderEnabled(enabled: Boolean)
+
+    // Stored as the raw ColorTheme enum name rather than the enum itself - ColorTheme is a
+    // presentation-layer concept (ui.theme), and this repository shouldn't depend on it. Empty
+    // string means "unset"; the UI layer decides the fallback.
+    val selectedColorThemeName: Flow<String>
+    suspend fun setSelectedColorThemeName(name: String)
 }
 
 @Singleton
@@ -67,6 +73,7 @@ class DataStoreAppPreferencesRepository @Inject constructor(
         val SUNDAY_WEIGH_IN_REMINDER_ENABLED = booleanPreferencesKey("sunday_weigh_in_reminder_enabled")
         val SUNDAY_WEIGH_IN_REMINDER_TIME_SECONDS = intPreferencesKey("sunday_weigh_in_reminder_time_seconds")
         val SUPPLEMENT_REMINDER_ENABLED = booleanPreferencesKey("supplement_reminder_enabled")
+        val SELECTED_COLOR_THEME = stringPreferencesKey("selected_color_theme")
     }
 
     override val hasCompletedOnboarding: Flow<Boolean> = context.dataStore.data
@@ -143,6 +150,13 @@ class DataStoreAppPreferencesRepository @Inject constructor(
 
     override suspend fun setSupplementReminderEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences -> preferences[Keys.SUPPLEMENT_REMINDER_ENABLED] = enabled }
+    }
+
+    override val selectedColorThemeName: Flow<String> = context.dataStore.data
+        .map { preferences -> preferences[Keys.SELECTED_COLOR_THEME] ?: "" }
+
+    override suspend fun setSelectedColorThemeName(name: String) {
+        context.dataStore.edit { preferences -> preferences[Keys.SELECTED_COLOR_THEME] = name }
     }
 
     private fun Int?.toLocalTime(default: LocalTime): LocalTime =
