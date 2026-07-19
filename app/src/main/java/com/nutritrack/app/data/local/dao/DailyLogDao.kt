@@ -30,4 +30,7 @@ interface DailyLogDao {
 
     @Query("SELECT * FROM daily_log WHERE date BETWEEN :startDate AND :endDate ORDER BY date ASC")
     fun observeBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<DailyLogEntity>>
+
+    @Query("SELECT * FROM daily_log ORDER BY date ASC")
+    suspend fun getAll(): List<DailyLogEntity>
 }

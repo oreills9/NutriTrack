@@ -12,6 +12,7 @@ interface ActivityLogRepository {
     fun observeEntriesBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<ActivityEntryEntity>>
     fun observeTotalCaloriesBurnedForDate(date: LocalDate): Flow<Double>
     fun observeRecentEntries(limit: Int = 5): Flow<List<ActivityEntryEntity>>
+    suspend fun getAllEntries(): List<ActivityEntryEntity>
     suspend fun logActivity(entry: ActivityEntryEntity): Long
     suspend fun updateEntry(entry: ActivityEntryEntity)
     suspend fun deleteEntry(entry: ActivityEntryEntity)
@@ -31,6 +32,8 @@ class RoomActivityLogRepository @Inject constructor(
         dao.observeTotalCaloriesBurnedForDate(date)
 
     override fun observeRecentEntries(limit: Int): Flow<List<ActivityEntryEntity>> = dao.observeRecent(limit)
+
+    override suspend fun getAllEntries(): List<ActivityEntryEntity> = dao.getAll()
 
     override suspend fun logActivity(entry: ActivityEntryEntity): Long = dao.insert(entry)
 

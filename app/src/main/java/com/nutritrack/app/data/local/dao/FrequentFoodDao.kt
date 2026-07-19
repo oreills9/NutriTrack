@@ -35,4 +35,7 @@ interface FrequentFoodDao {
 
     @Query("UPDATE frequent_food SET log_count = log_count + 1 WHERE id = :id")
     suspend fun incrementLogCount(id: Long)
+
+    @Query("SELECT * FROM frequent_food ORDER BY log_count DESC")
+    suspend fun getAll(): List<FrequentFoodEntity>
 }

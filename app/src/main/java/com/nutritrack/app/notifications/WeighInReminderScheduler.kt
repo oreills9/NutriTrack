@@ -9,20 +9,17 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
-object BloodPressureReminderScheduler {
+object WeighInReminderScheduler {
 
-    private const val UNIQUE_WORK_NAME = "blood_pressure_sunday_reminder"
+    private const val UNIQUE_WORK_NAME = "weigh_in_sunday_reminder"
 
-    // policy defaults to KEEP so re-running this at every app start (see NutriTrackApplication)
-    // doesn't reset an already-scheduled reminder's timing. Settings passes REPLACE explicitly
-    // when the user changes the time, since KEEP would then ignore the update.
     fun schedule(
         context: Context,
         time: LocalTime,
         policy: ExistingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.KEEP,
     ) {
         val initialDelay = Duration.between(LocalDateTime.now(), nextSundayAt(time))
-        val request = PeriodicWorkRequestBuilder<BloodPressureReminderWorker>(7, TimeUnit.DAYS)
+        val request = PeriodicWorkRequestBuilder<WeighInReminderWorker>(7, TimeUnit.DAYS)
             .setInitialDelay(initialDelay.toMinutes().coerceAtLeast(0), TimeUnit.MINUTES)
             .build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(UNIQUE_WORK_NAME, policy, request)

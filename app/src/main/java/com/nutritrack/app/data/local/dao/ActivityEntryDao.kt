@@ -39,4 +39,7 @@ interface ActivityEntryDao {
 
     @Query("SELECT * FROM activity_entry ORDER BY timestamp DESC LIMIT :limit")
     fun observeRecent(limit: Int = 5): Flow<List<ActivityEntryEntity>>
+
+    @Query("SELECT * FROM activity_entry ORDER BY date ASC, timestamp ASC")
+    suspend fun getAll(): List<ActivityEntryEntity>
 }

@@ -3,6 +3,8 @@ package com.nutritrack.app.di
 import com.nutritrack.app.data.repository.ActivityLogRepository
 import com.nutritrack.app.data.repository.BloodPressureRepository
 import com.nutritrack.app.data.repository.DailyLogRepository
+import com.nutritrack.app.data.repository.DataManagementRepository
+import com.nutritrack.app.data.repository.DefaultDataManagementRepository
 import com.nutritrack.app.data.repository.FoodDiaryRepository
 import com.nutritrack.app.data.repository.FoodLookupRepository
 import com.nutritrack.app.data.repository.FoodSearchRepository
@@ -89,4 +91,10 @@ abstract class RepositoryModule {
     abstract fun bindDailyLogRepository(
         impl: RoomDailyLogRepository,
     ): DailyLogRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDataManagementRepository(
+        impl: DefaultDataManagementRepository,
+    ): DataManagementRepository
 }

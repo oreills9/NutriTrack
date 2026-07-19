@@ -2,11 +2,13 @@ package com.nutritrack.app.data.repository
 
 import com.nutritrack.app.BuildConfig
 import com.nutritrack.app.data.local.entity.DataSource
+import com.nutritrack.app.data.prefs.AppPreferencesRepository
 import com.nutritrack.app.data.remote.nutritionix.NutritionixApi
 import com.nutritrack.app.data.remote.nutritionix.NutritionixFoodDto
 import com.nutritrack.app.data.remote.nutritionix.NutritionixRequest
 import com.nutritrack.app.data.remote.openfoodfacts.OpenFoodFactsApi
 import com.nutritrack.app.data.remote.openfoodfacts.SearchProductDto
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,6 +32,7 @@ interface FoodSearchRepository {
 class RemoteFoodSearchRepository @Inject constructor(
     private val openFoodFactsApi: OpenFoodFactsApi,
     private val nutritionixApi: NutritionixApi,
+    private val appPreferencesRepository: AppPreferencesRepository,
 ) : FoodSearchRepository {
 
     override suspend fun searchOpenFoodFacts(query: String): List<FoodSearchResult> = try {
@@ -41,16 +44,19 @@ class RemoteFoodSearchRepository @Inject constructor(
         emptyList()
     }
 
-    // Nutritionix credentials are optional (see local.properties); without them this is a no-op
-    // rather than a failed network call against blank headers.
+    // Prefers the key the user pasted into Settings (DataStore); falls back to the
+    // local.properties/BuildConfig value for developer convenience. Without either, this is a
+    // no-op rather than a failed network call against blank headers.
     override suspend fun searchNutritionix(query: String): List<FoodSearchResult> {
-        if (BuildConfig.NUTRITIONIX_APP_ID.isBlank() || BuildConfig.NUTRITIONIX_APP_KEY.isBlank()) {
+        val appId = appPreferencesRepository.nutritionixAppId.first().ifBlank { BuildConfig.NUTRITIONIX_APP_ID }
+        val appKey = appPreferencesRepository.nutritionixAppKey.first().ifBlank { BuildConfig.NUTRITIONIX_APP_KEY }
+        if (appId.isBlank() || appKey.isBlank()) {
             return emptyList()
         }
         return try {
             nutritionixApi.getNutrients(
-                appId = BuildConfig.NUTRITIONIX_APP_ID,
-                appKey = BuildConfig.NUTRITIONIX_APP_KEY,
+                appId = appId,
+                appKey = appKey,
                 request = NutritionixRequest(query = query),
             ).foods.take(5).map { it.toSearchResult() }
         } catch (t: Throwable) {

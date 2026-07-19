@@ -11,6 +11,8 @@ interface FoodDiaryRepository {
     fun observeEntriesForDate(date: LocalDate): Flow<List<FoodEntryEntity>>
     fun observeEntriesBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<FoodEntryEntity>>
     fun observeTotalCaloriesForDate(date: LocalDate): Flow<Double>
+    suspend fun getAllEntries(): List<FoodEntryEntity>
+    suspend fun getMostRecentEntry(): FoodEntryEntity?
     suspend fun logFood(entry: FoodEntryEntity): Long
     suspend fun updateEntry(entry: FoodEntryEntity)
     suspend fun deleteEntry(entry: FoodEntryEntity)
@@ -27,6 +29,10 @@ class RoomFoodDiaryRepository @Inject constructor(
         dao.observeBetweenDates(startDate, endDate)
 
     override fun observeTotalCaloriesForDate(date: LocalDate): Flow<Double> = dao.observeTotalCaloriesForDate(date)
+
+    override suspend fun getAllEntries(): List<FoodEntryEntity> = dao.getAll()
+
+    override suspend fun getMostRecentEntry(): FoodEntryEntity? = dao.getMostRecent()
 
     override suspend fun logFood(entry: FoodEntryEntity): Long = dao.insert(entry)
 

@@ -75,7 +75,14 @@ fun NutriTrackNavHost(
             SupplementsScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onDataReset = {
+                    navController.navigate(Screen.ProfileSetup.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                },
+            )
         }
         composable(Screen.WeightHistory.route) {
             WeightHistoryScreen(onBack = { navController.popBackStack() })

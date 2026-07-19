@@ -11,6 +11,7 @@ interface DailyLogRepository {
     fun observeForDate(date: LocalDate): Flow<DailyLogEntity?>
     fun observeBetweenDates(startDate: LocalDate, endDate: LocalDate): Flow<List<DailyLogEntity>>
     suspend fun getForDate(date: LocalDate): DailyLogEntity?
+    suspend fun getAllEntries(): List<DailyLogEntity>
     suspend fun upsert(log: DailyLogEntity)
 }
 
@@ -25,6 +26,8 @@ class RoomDailyLogRepository @Inject constructor(
         dao.observeBetweenDates(startDate, endDate)
 
     override suspend fun getForDate(date: LocalDate): DailyLogEntity? = dao.getForDate(date)
+
+    override suspend fun getAllEntries(): List<DailyLogEntity> = dao.getAll()
 
     override suspend fun upsert(log: DailyLogEntity) = dao.upsert(log)
 }

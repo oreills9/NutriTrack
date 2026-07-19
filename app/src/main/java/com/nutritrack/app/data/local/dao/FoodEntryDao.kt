@@ -43,4 +43,10 @@ interface FoodEntryDao {
 
     @Query("SELECT COALESCE(SUM(calories), 0.0) FROM food_entry WHERE date = :date")
     fun observeTotalCaloriesForDate(date: LocalDate): Flow<Double>
+
+    @Query("SELECT * FROM food_entry ORDER BY date ASC, timestamp ASC")
+    suspend fun getAll(): List<FoodEntryEntity>
+
+    @Query("SELECT * FROM food_entry ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getMostRecent(): FoodEntryEntity?
 }
