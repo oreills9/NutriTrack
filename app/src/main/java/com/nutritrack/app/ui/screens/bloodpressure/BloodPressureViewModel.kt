@@ -6,23 +6,20 @@ import com.nutritrack.app.data.local.entity.BloodPressureEntryEntity
 import com.nutritrack.app.data.local.entity.TimeOfDay
 import com.nutritrack.app.data.repository.BloodPressureRepository
 import com.nutritrack.app.domain.bloodpressure.BloodPressureAnalyzer
-import com.nutritrack.app.domain.bloodpressure.BloodPressureAverages
 import com.nutritrack.app.domain.bloodpressure.BloodPressureCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
 data class BloodPressureUiState(
-    val readings: List<BloodPressureEntryEntity> = emptyList(),
     val latestReading: BloodPressureEntryEntity? = null,
-    val eightWeekAverages: BloodPressureAverages? = null,
     val systolic: Int? = null,
     val diastolic: Int? = null,
     val heartRateBpm: Int? = null,
@@ -51,18 +48,9 @@ class BloodPressureViewModel @Inject constructor(
     val uiState: StateFlow<BloodPressureUiState> = _uiState.asStateFlow()
 
     init {
-        combine(
-            bloodPressureRepository.observeAllReadings(),
-            bloodPressureRepository.observeLatestReading(),
-        ) { readings, latest ->
-            _uiState.update {
-                it.copy(
-                    readings = readings,
-                    latestReading = latest,
-                    eightWeekAverages = BloodPressureAnalyzer.calculateAverages(readings),
-                )
-            }
-        }.launchIn(viewModelScope)
+        bloodPressureRepository.observeLatestReading()
+            .onEach { latest -> _uiState.update { it.copy(latestReading = latest) } }
+            .launchIn(viewModelScope)
     }
 
     fun updateSystolic(value: Int?) = _uiState.update { it.copy(systolic = value) }
@@ -95,13 +83,5 @@ class BloodPressureViewModel @Inject constructor(
             )
             _uiState.update { it.copy(isSaving = false, isSaved = true) }
         }
-    }
-
-    fun updateReading(entry: BloodPressureEntryEntity) {
-        viewModelScope.launch { bloodPressureRepository.updateReading(entry) }
-    }
-
-    fun deleteReading(entry: BloodPressureEntryEntity) {
-        viewModelScope.launch { bloodPressureRepository.deleteReading(entry) }
     }
 }
