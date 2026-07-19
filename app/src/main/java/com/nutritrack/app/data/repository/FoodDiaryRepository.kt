@@ -2,6 +2,7 @@ package com.nutritrack.app.data.repository
 
 import com.nutritrack.app.data.local.dao.FoodEntryDao
 import com.nutritrack.app.data.local.entity.FoodEntryEntity
+import com.nutritrack.app.widget.WidgetRefreshTrigger
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
@@ -21,6 +22,7 @@ interface FoodDiaryRepository {
 @Singleton
 class RoomFoodDiaryRepository @Inject constructor(
     private val dao: FoodEntryDao,
+    private val widgetRefreshTrigger: WidgetRefreshTrigger,
 ) : FoodDiaryRepository {
 
     override fun observeEntriesForDate(date: LocalDate): Flow<List<FoodEntryEntity>> = dao.observeForDate(date)
@@ -34,7 +36,11 @@ class RoomFoodDiaryRepository @Inject constructor(
 
     override suspend fun getMostRecentEntry(): FoodEntryEntity? = dao.getMostRecent()
 
-    override suspend fun logFood(entry: FoodEntryEntity): Long = dao.insert(entry)
+    override suspend fun logFood(entry: FoodEntryEntity): Long {
+        val id = dao.insert(entry)
+        widgetRefreshTrigger.refresh()
+        return id
+    }
 
     override suspend fun updateEntry(entry: FoodEntryEntity) = dao.update(entry)
 
