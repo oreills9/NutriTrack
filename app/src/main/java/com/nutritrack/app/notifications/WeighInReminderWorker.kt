@@ -46,7 +46,7 @@ class WeighInReminderWorker(
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("Weekly weigh-in")
-            .setContentText("It's Sunday morning - log this week's weight.")
+            .setContentText("Good morning — time for your weekly weigh-in. Log your weight in NutriTrack.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

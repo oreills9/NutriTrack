@@ -6,8 +6,11 @@ import android.app.NotificationManager
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.nutritrack.app.data.prefs.AppPreferencesRepository
+import com.nutritrack.app.data.repository.SupplementsRepository
 import com.nutritrack.app.notifications.BloodPressureReminderScheduler
 import com.nutritrack.app.notifications.BloodPressureReminderWorker
+import com.nutritrack.app.notifications.DailyLogBadgeManager
+import com.nutritrack.app.notifications.DailyLogBadgeScheduler
 import com.nutritrack.app.notifications.MealGapReminderScheduler
 import com.nutritrack.app.notifications.MealGapReminderWorker
 import com.nutritrack.app.notifications.SupplementReminderScheduler
@@ -32,6 +35,9 @@ class NutriTrackApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var appPreferencesRepository: AppPreferencesRepository
 
+    @Inject
+    lateinit var supplementsRepository: SupplementsRepository
+
     // Lives for the process lifetime, same as the Application itself - never needs cancelling.
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -46,6 +52,7 @@ class NutriTrackApplication : Application(), Configuration.Provider {
         super.onCreate()
         createNotificationChannels()
         SupplementResetScheduler.schedule(this)
+        DailyLogBadgeScheduler.schedule(this)
         applyStoredReminderPreferences()
     }
 
@@ -66,10 +73,15 @@ class NutriTrackApplication : Application(), Configuration.Provider {
                 WeighInReminderScheduler.cancel(this@NutriTrackApplication)
             }
 
-            if (appPreferencesRepository.supplementReminderEnabled.first()) {
-                SupplementReminderScheduler.schedule(this@NutriTrackApplication, appPreferencesRepository.supplementReminderTime.first())
-            } else {
-                SupplementReminderScheduler.cancel(this@NutriTrackApplication)
+            // Each supplement carries its own reminder time, so this loops over the current
+            // checklist rather than scheduling a single shared job.
+            val supplementReminderEnabled = appPreferencesRepository.supplementReminderEnabled.first()
+            supplementsRepository.observeChecklist().first().forEach { supplement ->
+                if (supplementReminderEnabled) {
+                    SupplementReminderScheduler.schedule(this@NutriTrackApplication, supplement.id, supplement.timeOfDay)
+                } else {
+                    SupplementReminderScheduler.cancel(this@NutriTrackApplication, supplement.id)
+                }
             }
 
             if (appPreferencesRepository.mealGapReminderEnabled.first()) {
@@ -101,7 +113,7 @@ class NutriTrackApplication : Application(), Configuration.Provider {
                 SupplementReminderWorker.CHANNEL_ID,
                 "Supplement Reminders",
                 NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply { description = "Daily reminder for supplements or medication not yet taken" },
+            ).apply { description = "Reminder for a supplement or medication not yet taken" },
         )
         manager.createNotificationChannel(
             NotificationChannel(
@@ -109,6 +121,13 @@ class NutriTrackApplication : Application(), Configuration.Provider {
                 "Meal Gap Reminders",
                 NotificationManager.IMPORTANCE_DEFAULT,
             ).apply { description = "Reminder when it's been a while since your last logged meal" },
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
+                DailyLogBadgeManager.CHANNEL_ID,
+                "App Icon Badge",
+                NotificationManager.IMPORTANCE_MIN,
+            ).apply { description = "Drives the app icon badge when today's food log is incomplete" },
         )
     }
 }

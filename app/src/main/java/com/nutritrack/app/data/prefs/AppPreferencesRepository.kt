@@ -16,7 +16,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "app_preferences")
-private val DEFAULT_REMINDER_TIME: LocalTime = LocalTime.of(9, 0)
+private val DEFAULT_BP_REMINDER_TIME: LocalTime = LocalTime.of(9, 0)
+private val DEFAULT_WEIGH_IN_REMINDER_TIME: LocalTime = LocalTime.of(8, 0)
 
 interface AppPreferencesRepository {
     val hasCompletedOnboarding: Flow<Boolean>
@@ -44,10 +45,10 @@ interface AppPreferencesRepository {
     val sundayWeighInReminderTime: Flow<LocalTime>
     suspend fun setSundayWeighInReminderTime(time: LocalTime)
 
+    // Supplements each carry their own reminder time (SupplementEntryEntity.timeOfDay); this is
+    // just the master on/off switch for all of them.
     val supplementReminderEnabled: Flow<Boolean>
     suspend fun setSupplementReminderEnabled(enabled: Boolean)
-    val supplementReminderTime: Flow<LocalTime>
-    suspend fun setSupplementReminderTime(time: LocalTime)
 }
 
 @Singleton
@@ -66,7 +67,6 @@ class DataStoreAppPreferencesRepository @Inject constructor(
         val SUNDAY_WEIGH_IN_REMINDER_ENABLED = booleanPreferencesKey("sunday_weigh_in_reminder_enabled")
         val SUNDAY_WEIGH_IN_REMINDER_TIME_SECONDS = intPreferencesKey("sunday_weigh_in_reminder_time_seconds")
         val SUPPLEMENT_REMINDER_ENABLED = booleanPreferencesKey("supplement_reminder_enabled")
-        val SUPPLEMENT_REMINDER_TIME_SECONDS = intPreferencesKey("supplement_reminder_time_seconds")
     }
 
     override val hasCompletedOnboarding: Flow<Boolean> = context.dataStore.data
@@ -95,7 +95,7 @@ class DataStoreAppPreferencesRepository @Inject constructor(
     }
 
     override val mealGapReminderEnabled: Flow<Boolean> = context.dataStore.data
-        .map { preferences -> preferences[Keys.MEAL_GAP_REMINDER_ENABLED] ?: false }
+        .map { preferences -> preferences[Keys.MEAL_GAP_REMINDER_ENABLED] ?: true }
 
     override suspend fun setMealGapReminderEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences -> preferences[Keys.MEAL_GAP_REMINDER_ENABLED] = enabled }
@@ -116,21 +116,21 @@ class DataStoreAppPreferencesRepository @Inject constructor(
     }
 
     override val sundayBpReminderTime: Flow<LocalTime> = context.dataStore.data
-        .map { preferences -> preferences[Keys.SUNDAY_BP_REMINDER_TIME_SECONDS].toLocalTime() }
+        .map { preferences -> preferences[Keys.SUNDAY_BP_REMINDER_TIME_SECONDS].toLocalTime(DEFAULT_BP_REMINDER_TIME) }
 
     override suspend fun setSundayBpReminderTime(time: LocalTime) {
         context.dataStore.edit { preferences -> preferences[Keys.SUNDAY_BP_REMINDER_TIME_SECONDS] = time.toSecondOfDay() }
     }
 
     override val sundayWeighInReminderEnabled: Flow<Boolean> = context.dataStore.data
-        .map { preferences -> preferences[Keys.SUNDAY_WEIGH_IN_REMINDER_ENABLED] ?: false }
+        .map { preferences -> preferences[Keys.SUNDAY_WEIGH_IN_REMINDER_ENABLED] ?: true }
 
     override suspend fun setSundayWeighInReminderEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences -> preferences[Keys.SUNDAY_WEIGH_IN_REMINDER_ENABLED] = enabled }
     }
 
     override val sundayWeighInReminderTime: Flow<LocalTime> = context.dataStore.data
-        .map { preferences -> preferences[Keys.SUNDAY_WEIGH_IN_REMINDER_TIME_SECONDS].toLocalTime() }
+        .map { preferences -> preferences[Keys.SUNDAY_WEIGH_IN_REMINDER_TIME_SECONDS].toLocalTime(DEFAULT_WEIGH_IN_REMINDER_TIME) }
 
     override suspend fun setSundayWeighInReminderTime(time: LocalTime) {
         context.dataStore.edit {
@@ -139,18 +139,12 @@ class DataStoreAppPreferencesRepository @Inject constructor(
     }
 
     override val supplementReminderEnabled: Flow<Boolean> = context.dataStore.data
-        .map { preferences -> preferences[Keys.SUPPLEMENT_REMINDER_ENABLED] ?: false }
+        .map { preferences -> preferences[Keys.SUPPLEMENT_REMINDER_ENABLED] ?: true }
 
     override suspend fun setSupplementReminderEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences -> preferences[Keys.SUPPLEMENT_REMINDER_ENABLED] = enabled }
     }
 
-    override val supplementReminderTime: Flow<LocalTime> = context.dataStore.data
-        .map { preferences -> preferences[Keys.SUPPLEMENT_REMINDER_TIME_SECONDS].toLocalTime() }
-
-    override suspend fun setSupplementReminderTime(time: LocalTime) {
-        context.dataStore.edit { preferences -> preferences[Keys.SUPPLEMENT_REMINDER_TIME_SECONDS] = time.toSecondOfDay() }
-    }
-
-    private fun Int?.toLocalTime(): LocalTime = this?.let { LocalTime.ofSecondOfDay(it.toLong()) } ?: DEFAULT_REMINDER_TIME
+    private fun Int?.toLocalTime(default: LocalTime): LocalTime =
+        this?.let { LocalTime.ofSecondOfDay(it.toLong()) } ?: default
 }

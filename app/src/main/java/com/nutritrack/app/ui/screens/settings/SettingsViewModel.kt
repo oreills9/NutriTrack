@@ -10,6 +10,7 @@ import com.nutritrack.app.data.local.entity.BiologicalSex
 import com.nutritrack.app.data.local.entity.UnitSystem
 import com.nutritrack.app.data.prefs.AppPreferencesRepository
 import com.nutritrack.app.data.repository.DataManagementRepository
+import com.nutritrack.app.data.repository.SupplementsRepository
 import com.nutritrack.app.data.repository.UserProfile
 import com.nutritrack.app.data.repository.UserProfileRepository
 import com.nutritrack.app.domain.calorie.CalorieCalculator
@@ -50,14 +51,13 @@ data class SettingsUiState(
     val isSavingNutritionixKeys: Boolean = false,
     val nutritionixSavedMessage: String? = null,
 
-    val mealGapReminderEnabled: Boolean = false,
+    val mealGapReminderEnabled: Boolean = true,
     val mealGapReminderHours: Int = 4,
     val sundayBpReminderEnabled: Boolean = true,
     val sundayBpReminderTime: LocalTime = LocalTime.of(9, 0),
-    val sundayWeighInReminderEnabled: Boolean = false,
-    val sundayWeighInReminderTime: LocalTime = LocalTime.of(9, 0),
-    val supplementReminderEnabled: Boolean = false,
-    val supplementReminderTime: LocalTime = LocalTime.of(9, 0),
+    val sundayWeighInReminderEnabled: Boolean = true,
+    val sundayWeighInReminderTime: LocalTime = LocalTime.of(8, 0),
+    val supplementReminderEnabled: Boolean = true,
 
     val isExporting: Boolean = false,
     val exportMessage: String? = null,
@@ -79,6 +79,7 @@ class SettingsViewModel @Inject constructor(
     private val userProfileRepository: UserProfileRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
     private val dataManagementRepository: DataManagementRepository,
+    private val supplementsRepository: SupplementsRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -135,14 +136,12 @@ class SettingsViewModel @Inject constructor(
             appPreferencesRepository.sundayWeighInReminderEnabled,
             appPreferencesRepository.sundayWeighInReminderTime,
             appPreferencesRepository.supplementReminderEnabled,
-            appPreferencesRepository.supplementReminderTime,
-        ) { weighInEnabled, weighInTime, supplementEnabled, supplementTime ->
+        ) { weighInEnabled, weighInTime, supplementEnabled ->
             _uiState.update {
                 it.copy(
                     sundayWeighInReminderEnabled = weighInEnabled,
                     sundayWeighInReminderTime = weighInTime,
                     supplementReminderEnabled = supplementEnabled,
-                    supplementReminderTime = supplementTime,
                 )
             }
         }.launchIn(viewModelScope)
@@ -285,26 +284,17 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    // Each supplement has its own reminder time, so this toggle just schedules/cancels a job per
+    // supplement rather than a single shared one.
     fun setSupplementReminderEnabled(enabled: Boolean) {
         viewModelScope.launch {
             appPreferencesRepository.setSupplementReminderEnabled(enabled)
-            if (enabled) {
-                SupplementReminderScheduler.schedule(
-                    context,
-                    _uiState.value.supplementReminderTime,
-                    ExistingPeriodicWorkPolicy.REPLACE,
-                )
-            } else {
-                SupplementReminderScheduler.cancel(context)
-            }
-        }
-    }
-
-    fun setSupplementReminderTime(time: LocalTime) {
-        viewModelScope.launch {
-            appPreferencesRepository.setSupplementReminderTime(time)
-            if (_uiState.value.supplementReminderEnabled) {
-                SupplementReminderScheduler.schedule(context, time, ExistingPeriodicWorkPolicy.REPLACE)
+            supplementsRepository.observeChecklist().first().forEach { supplement ->
+                if (enabled) {
+                    SupplementReminderScheduler.schedule(context, supplement.id, supplement.timeOfDay, ExistingPeriodicWorkPolicy.REPLACE)
+                } else {
+                    SupplementReminderScheduler.cancel(context, supplement.id)
+                }
             }
         }
     }
@@ -322,9 +312,10 @@ class SettingsViewModel @Inject constructor(
     fun resetAllData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isResetting = true) }
+            val supplementIds = supplementsRepository.observeChecklist().first().map { it.id }
             BloodPressureReminderScheduler.cancel(context)
             WeighInReminderScheduler.cancel(context)
-            SupplementReminderScheduler.cancel(context)
+            supplementIds.forEach { SupplementReminderScheduler.cancel(context, it) }
             MealGapReminderScheduler.cancel(context)
             dataManagementRepository.resetAllData()
             _uiState.update { it.copy(isResetting = false, resetComplete = true) }

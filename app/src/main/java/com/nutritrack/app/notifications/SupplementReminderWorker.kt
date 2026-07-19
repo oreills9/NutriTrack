@@ -12,11 +12,11 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.nutritrack.app.MainActivity
+import com.nutritrack.app.data.local.entity.SupplementEntryEntity
 import com.nutritrack.app.data.repository.SupplementsRepository
 import com.nutritrack.app.ui.navigation.Screen
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.flow.first
 
 @HiltWorker
 class SupplementReminderWorker @AssistedInject constructor(
@@ -26,12 +26,16 @@ class SupplementReminderWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        val hasUntaken = supplementsRepository.observeChecklist().first().any { !it.takenToday }
-        if (hasUntaken) showNotification()
+        val supplementId = inputData.getLong(INPUT_KEY_SUPPLEMENT_ID, -1L)
+        if (supplementId == -1L) return Result.failure()
+        // The supplement may have been deleted since this job was scheduled - just no-op rather
+        // than treating it as a failure the WorkManager retry policy would act on.
+        val supplement = supplementsRepository.getById(supplementId) ?: return Result.success()
+        if (!supplement.takenToday) showNotification(supplement)
         return Result.success()
     }
 
-    private fun showNotification() {
+    private fun showNotification(supplement: SupplementEntryEntity) {
         val context = applicationContext
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
@@ -46,26 +50,29 @@ class SupplementReminderWorker @AssistedInject constructor(
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            NOTIFICATION_REQUEST_CODE,
+            NOTIFICATION_REQUEST_CODE_BASE + supplement.id.toInt(),
             contentIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Supplement reminder")
-            .setContentText("You still have supplements or medication to take today.")
+            .setContentTitle("Time for ${supplement.name}")
+            .setContentText(supplement.dosageNotes?.ifBlank { null } ?: "Mark it as taken in NutriTrack once you have.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+        // Offset by supplement id so each supplement's notification is independent - taking one
+        // doesn't dismiss another, and a later reminder doesn't overwrite an earlier untapped one.
+        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_BASE + supplement.id.toInt(), notification)
     }
 
     companion object {
         const val CHANNEL_ID = "supplement_reminder"
-        private const val NOTIFICATION_ID = 1005
-        private const val NOTIFICATION_REQUEST_CODE = 2005
+        const val INPUT_KEY_SUPPLEMENT_ID = "supplement_id"
+        private const val NOTIFICATION_ID_BASE = 5000
+        private const val NOTIFICATION_REQUEST_CODE_BASE = 6000
     }
 }

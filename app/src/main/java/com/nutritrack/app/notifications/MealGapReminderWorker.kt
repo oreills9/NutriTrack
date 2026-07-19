@@ -18,6 +18,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalTime
 
 @HiltWorker
 class MealGapReminderWorker @AssistedInject constructor(
@@ -27,6 +28,9 @@ class MealGapReminderWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        val hour = LocalTime.now().hour
+        if (hour !in WINDOW_START_HOUR until WINDOW_END_HOUR) return Result.success()
+
         val thresholdHours = inputData.getInt(INPUT_KEY_THRESHOLD_HOURS, DEFAULT_THRESHOLD_HOURS)
         val mostRecent = foodDiaryRepository.getMostRecentEntry()
         val hoursSinceLastMeal = mostRecent?.let { Duration.between(it.timestamp, Instant.now()).toHours() }
@@ -58,8 +62,8 @@ class MealGapReminderWorker @AssistedInject constructor(
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Haven't logged a meal in a while")
-            .setContentText("Tap to add your next meal to the Diary.")
+            .setContentTitle("Meal reminder")
+            .setContentText("You haven't logged anything in a while — don't forget to track your meals.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
@@ -74,5 +78,9 @@ class MealGapReminderWorker @AssistedInject constructor(
         const val DEFAULT_THRESHOLD_HOURS = 4
         private const val NOTIFICATION_ID = 1006
         private const val NOTIFICATION_REQUEST_CODE = 2006
+
+        // Only surfaces the reminder during waking hours - 8am up to (not including) 9pm.
+        private const val WINDOW_START_HOUR = 8
+        private const val WINDOW_END_HOUR = 21
     }
 }

@@ -47,7 +47,7 @@ class BloodPressureReminderWorker(
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("Weekly blood pressure check")
-            .setContentText("It's Sunday morning - log your blood pressure reading.")
+            .setContentText("Time for your weekly blood pressure check. Sit quietly for 5 minutes first.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)

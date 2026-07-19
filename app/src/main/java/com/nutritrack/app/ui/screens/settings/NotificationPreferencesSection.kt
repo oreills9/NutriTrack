@@ -61,12 +61,10 @@ fun NotificationPreferencesSection(uiState: SettingsUiState, viewModel: Settings
 
         ReminderToggleRow(
             title = "Supplement Reminders",
-            subtitle = "Daily nudge for anything not yet taken",
+            subtitle = "Each supplement reminds you at its own scheduled time",
             checked = uiState.supplementReminderEnabled,
             onCheckedChange = viewModel::setSupplementReminderEnabled,
-        ) {
-            TimePickerRow(time = uiState.supplementReminderTime, onTimeChange = viewModel::setSupplementReminderTime)
-        }
+        )
     }
 }
 

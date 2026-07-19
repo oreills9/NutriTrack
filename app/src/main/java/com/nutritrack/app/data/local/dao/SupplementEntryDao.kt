@@ -24,6 +24,9 @@ interface SupplementEntryDao {
     @Query("SELECT * FROM supplement_entry ORDER BY time_of_day ASC")
     fun observeAll(): Flow<List<SupplementEntryEntity>>
 
+    @Query("SELECT * FROM supplement_entry WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): SupplementEntryEntity?
+
     @Query("UPDATE supplement_entry SET taken_today = :taken WHERE id = :id")
     suspend fun setTaken(id: Long, taken: Boolean)
 
