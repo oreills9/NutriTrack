@@ -138,6 +138,8 @@ fun SettingsScreen(
             SectionHeader("Data Management")
             DataManagementSection(uiState = uiState, viewModel = viewModel)
 
+            DeveloperTestSection()
+
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "NutriTrack ${uiState.appVersion}",
