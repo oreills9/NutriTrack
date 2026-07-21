@@ -1,5 +1,6 @@
 package com.nutritrack.app.widget
 
+import com.nutritrack.app.data.repository.ActivityLogRepository
 import com.nutritrack.app.data.repository.FoodDiaryRepository
 import com.nutritrack.app.data.repository.UserProfileRepository
 import dagger.hilt.EntryPoint
@@ -12,5 +13,6 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface NutriWidgetEntryPoint {
     fun foodDiaryRepository(): FoodDiaryRepository
+    fun activityLogRepository(): ActivityLogRepository
     fun userProfileRepository(): UserProfileRepository
 }

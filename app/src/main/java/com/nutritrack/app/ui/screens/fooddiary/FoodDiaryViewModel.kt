@@ -27,7 +27,6 @@ data class FoodDiaryUiState(
     val totalCaloriesConsumed: Double = 0.0,
     val totalCaloriesBurned: Double = 0.0,
     val dailyCalorieTarget: Int? = null,
-    val remainingCalories: Double? = null,
     val netCalories: Double? = null,
     val remainingAdjustedCalories: Double? = null,
     val paceIndicator: CaloriePaceIndicator? = null,
@@ -58,10 +57,10 @@ class FoodDiaryViewModel @Inject constructor(
                 totalCaloriesConsumed = consumed,
                 totalCaloriesBurned = burned,
                 dailyCalorieTarget = target,
-                remainingCalories = target?.let { it - consumed },
                 netCalories = net,
                 remainingAdjustedCalories = target?.let { it - net },
-                paceIndicator = target?.let { CaloriePacingCalculator.calculatePaceIndicator(consumed, it) },
+                // Net of activity burned, so pace/color correctly reacts to logged activity too.
+                paceIndicator = target?.let { CaloriePacingCalculator.calculatePaceIndicator(net, it) },
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FoodDiaryUiState())

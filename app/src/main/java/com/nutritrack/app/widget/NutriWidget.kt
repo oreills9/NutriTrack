@@ -42,8 +42,13 @@ class NutriWidget : GlanceAppWidget() {
             context.applicationContext,
             NutriWidgetEntryPoint::class.java,
         )
+        val today = LocalDate.now()
         val caloriesConsumed = entryPoint.foodDiaryRepository()
-            .observeTotalCaloriesForDate(LocalDate.now())
+            .observeTotalCaloriesForDate(today)
+            .first()
+            .roundToInt()
+        val caloriesBurned = entryPoint.activityLogRepository()
+            .observeTotalCaloriesBurnedForDate(today)
             .first()
             .roundToInt()
         val dailyTarget = entryPoint.userProfileRepository().getProfile()?.dailyCalorieTarget?.takeIf { it > 0 }
@@ -54,6 +59,7 @@ class NutriWidget : GlanceAppWidget() {
                 NutriWidgetContent(
                     context = context,
                     caloriesConsumed = caloriesConsumed,
+                    caloriesBurned = caloriesBurned,
                     dailyTarget = dailyTarget,
                     mealSlot = mealSlot,
                 )
@@ -70,7 +76,13 @@ internal fun currentMealSlot(hour: Int = LocalTime.now().hour): MealSlot = when 
 }
 
 @Composable
-private fun NutriWidgetContent(context: Context, caloriesConsumed: Int, dailyTarget: Int?, mealSlot: MealSlot) {
+private fun NutriWidgetContent(
+    context: Context,
+    caloriesConsumed: Int,
+    caloriesBurned: Int,
+    dailyTarget: Int?,
+    mealSlot: MealSlot,
+) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -88,8 +100,11 @@ private fun NutriWidgetContent(context: Context, caloriesConsumed: Int, dailyTar
                 style = TextStyle(color = GlanceTheme.colors.onBackground, fontSize = 14.sp),
             )
         } else {
-            val progress = (caloriesConsumed.toFloat() / dailyTarget.toFloat()).coerceIn(0f, 1f)
-            val remaining = dailyTarget - caloriesConsumed
+            // Net of activity burned, matching the Diary screen's "Remaining" - logging a workout
+            // should be reflected here too, not just food entries.
+            val netConsumed = caloriesConsumed - caloriesBurned
+            val progress = (netConsumed.toFloat() / dailyTarget.toFloat()).coerceIn(0f, 1f)
+            val remaining = dailyTarget - netConsumed
 
             Row {
                 Text(

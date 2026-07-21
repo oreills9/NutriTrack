@@ -149,7 +149,7 @@ private fun DiaryTopBar(
             DiaryStat(label = "Consumed", value = "${uiState.totalCaloriesConsumed.roundToInt()} kcal")
             DiaryStat(
                 label = "Remaining",
-                value = uiState.remainingCalories?.let { "${it.roundToInt()} kcal" } ?: "Set a target",
+                value = uiState.remainingAdjustedCalories?.let { "${it.roundToInt()} kcal" } ?: "Set a target",
             )
         }
     }
@@ -245,7 +245,9 @@ private fun CaloriePacingSection(uiState: FoodDiaryUiState, modifier: Modifier =
             )
         } else {
             val isToday = uiState.selectedDate == LocalDate.now()
-            val progress = (uiState.totalCaloriesConsumed / target).toFloat().coerceIn(0f, 1f)
+            // Net of activity burned, so the bar actually moves when an activity is logged.
+            val netConsumed = uiState.totalCaloriesConsumed - uiState.totalCaloriesBurned
+            val progress = (netConsumed / target).toFloat().coerceIn(0f, 1f)
             val expectedProgress = (LocalTime.now().toSecondOfDay() / SECONDS_PER_DAY).coerceIn(0f, 1f)
             val barColor = if (isToday && uiState.paceIndicator == CaloriePaceIndicator.OVER_PACE) {
                 PaceAmber
@@ -396,7 +398,7 @@ private fun DiaryFooter(uiState: FoodDiaryUiState, modifier: Modifier = Modifier
         FooterStatRow("Activity Burned", "${uiState.totalCaloriesBurned.roundToInt()} kcal")
         FooterStatRow("Net Intake", uiState.netCalories?.let { "${it.roundToInt()} kcal" } ?: "-")
         FooterStatRow(
-            "Remaining (Adjusted)",
+            "Remaining",
             uiState.remainingAdjustedCalories?.let { "${it.roundToInt()} kcal" } ?: "-",
         )
     }
