@@ -179,7 +179,7 @@ private fun FallbackOptionsRow(
 }
 
 @Composable
-private fun ManualEntryForm(uiState: AddFoodUiState, viewModel: AddFoodViewModel, modifier: Modifier = Modifier) {
+internal fun ManualEntryForm(uiState: AddFoodUiState, viewModel: AddFoodViewModel, modifier: Modifier = Modifier) {
     val entry = uiState.manualEntry
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Enter Manually", style = MaterialTheme.typography.titleMedium)

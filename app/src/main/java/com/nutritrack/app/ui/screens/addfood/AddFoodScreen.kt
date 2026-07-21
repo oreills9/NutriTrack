@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.nutritrack.app.domain.nutritionlabel.NutritionLabelParser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +66,11 @@ fun AddFoodScreen(
                         onClick = { viewModel.selectTab(AddFoodTab.SCAN) },
                         text = { Text("Scan") },
                     )
+                    Tab(
+                        selected = uiState.selectedTab == AddFoodTab.LABEL_SCAN,
+                        onClick = { viewModel.selectTab(AddFoodTab.LABEL_SCAN) },
+                        text = { Text("Label") },
+                    )
                 }
             }
         },
@@ -77,6 +83,11 @@ fun AddFoodScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
                 AddFoodTab.SCAN -> ScanTabHost(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                AddFoodTab.LABEL_SCAN -> LabelScanTabHost(
                     uiState = uiState,
                     viewModel = viewModel,
                     modifier = Modifier.fillMaxSize(),
@@ -117,6 +128,41 @@ private fun ScanTabHost(uiState: AddFoodUiState, viewModel: AddFoodViewModel, mo
                 Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             }
             ScanTabContent(onBarcodeScanned = viewModel::onBarcodeScanned, modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun LabelScanTabHost(uiState: AddFoodUiState, viewModel: AddFoodViewModel, modifier: Modifier = Modifier) {
+    if (uiState.showLabelScanForm) {
+        Column(
+            modifier = modifier
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        ) {
+            Text(
+                "Review the scanned values below before saving - OCR isn't always perfect.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+            ManualEntryForm(uiState = uiState, viewModel = viewModel)
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(onClick = viewModel::resetLabelScan, modifier = Modifier.fillMaxWidth()) {
+                Text("Scan Again")
+            }
+        }
+    } else {
+        Column(modifier = modifier) {
+            uiState.scanErrorMessage?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+            }
+            LabelScanTabContent(
+                isProcessing = uiState.isProcessingLabelScan,
+                onCaptured = viewModel::onLabelScanCaptured,
+                onTextRecognized = { text -> viewModel.onNutritionLabelScanned(NutritionLabelParser.parse(text)) },
+                onRecognitionFailed = viewModel::onLabelScanFailed,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }

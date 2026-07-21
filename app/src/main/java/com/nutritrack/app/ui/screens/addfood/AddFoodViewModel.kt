@@ -15,6 +15,7 @@ import com.nutritrack.app.data.repository.FoodSearchRepository
 import com.nutritrack.app.data.repository.FoodSearchResult
 import com.nutritrack.app.data.repository.FrequentFoodsRepository
 import com.nutritrack.app.data.repository.ScannedFood
+import com.nutritrack.app.domain.nutritionlabel.ParsedNutritionLabel
 import com.nutritrack.app.ui.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
@@ -29,7 +30,7 @@ import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 
-enum class AddFoodTab { SEARCH, SCAN }
+enum class AddFoodTab { SEARCH, SCAN, LABEL_SCAN }
 
 data class SelectedFood(
     val name: String,
@@ -67,6 +68,8 @@ data class AddFoodUiState(
     val isSaving: Boolean = false,
     val isSaved: Boolean = false,
     val scanErrorMessage: String? = null,
+    val showLabelScanForm: Boolean = false,
+    val isProcessingLabelScan: Boolean = false,
 ) {
     val caloriesForPortion: Double?
         get() = selectedFood?.let { it.caloriesPer100g * portionGrams / 100.0 }
@@ -212,6 +215,45 @@ class AddFoodViewModel @Inject constructor(
     fun updateManualCarbs(value: String) =
         _uiState.update { it.copy(manualEntry = it.manualEntry.copy(carbsG = value)) }
 
+    fun onLabelScanCaptured() = _uiState.update { it.copy(isProcessingLabelScan = true, scanErrorMessage = null) }
+
+    fun onNutritionLabelScanned(result: ParsedNutritionLabel) {
+        if (result.isEmpty) {
+            _uiState.update {
+                it.copy(
+                    isProcessingLabelScan = false,
+                    scanErrorMessage = "Couldn't read any nutrition values from that photo - try again, or enter them manually below.",
+                )
+            }
+            return
+        }
+        _uiState.update {
+            it.copy(
+                isProcessingLabelScan = false,
+                showLabelScanForm = true,
+                manualEntry = ManualEntryState(
+                    calories = result.calories?.let(::formatParsedValue) ?: "",
+                    portionGrams = result.servingSizeG?.let(::formatParsedValue) ?: it.manualEntry.portionGrams,
+                    proteinG = result.proteinG?.let(::formatParsedValue) ?: "",
+                    fatG = result.fatG?.let(::formatParsedValue) ?: "",
+                    carbsG = result.carbsG?.let(::formatParsedValue) ?: "",
+                ),
+            )
+        }
+    }
+
+    fun onLabelScanFailed() {
+        _uiState.update {
+            it.copy(isProcessingLabelScan = false, scanErrorMessage = "Couldn't read that photo - try again.")
+        }
+    }
+
+    fun resetLabelScan() {
+        _uiState.update {
+            it.copy(showLabelScanForm = false, manualEntry = ManualEntryState(), scanErrorMessage = null)
+        }
+    }
+
     fun onBarcodeScanned(barcode: String) {
         viewModelScope.launch {
             when (val result = foodLookupRepository.lookupBarcode(barcode)) {
@@ -289,6 +331,9 @@ class AddFoodViewModel @Inject constructor(
         }
     }
 }
+
+private fun formatParsedValue(value: Double): String =
+    if (value == value.toInt().toDouble()) value.toInt().toString() else value.toString()
 
 private fun FoodSearchResult.toSelectedFood() = SelectedFood(
     name = name,

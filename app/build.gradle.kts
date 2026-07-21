@@ -103,6 +103,7 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.barcode.scanning)
+    implementation(libs.mlkit.text.recognition)
 
     // Networking (Open Food Facts lookup)
     implementation(libs.retrofit)

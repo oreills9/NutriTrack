@@ -25,9 +25,10 @@ workManager = "2.11.2"
 # Navigation
 navigationCompose = "2.9.8"
 
-# Camera / barcode scanning
+# Camera / barcode scanning / text recognition
 cameraX = "1.5.1"
 mlkitBarcodeScanning = "17.3.0"
+mlkitTextRecognition = "16.0.1"
 
 # Networking (Open Food Facts lookup)
 retrofit = "3.0.0"
@@ -89,6 +90,7 @@ androidx-camera-view = { group = "androidx.camera", name = "camera-view", versio
 
 # ML Kit
 mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcodeScanning" }
+mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
 
 # Networking
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
